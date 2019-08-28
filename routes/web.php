@@ -16,3 +16,5 @@ Route::get('/', function () {
 });
 
 Route::get('/google-map', ['uses' => 'GoogleMapController@index']);
+Route::get('/login', ['uses' => 'RocketLoginController@getToken']);
+Route::post('/get-airport-data', ['uses' => 'AirportDataController@getAirportData']);
