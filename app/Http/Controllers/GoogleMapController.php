@@ -2,9 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-
-class GoogleMapController extends Controller
+class GoogleMapController
 {
     public function index()
     {

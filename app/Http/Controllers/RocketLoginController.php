@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 class RocketLoginController extends Controller
 {
     const ROCKET_ROUTE_TOKEN = 'rocket-route-token';
+    const ROCKET_ROUTE_REFRESH_TOKEN = 'rocket-route-refresh-token';
     const LOGIN_URL = "https://flydev.rocketroute.com/api/login";
 
     /**
@@ -22,32 +23,92 @@ class RocketLoginController extends Controller
         $this->guzzleHttpClient = $guzzleHttpClient;
     }
 
+    /**
+     * @param Request $request
+     * @return \Illuminate\Session\SessionManager|\Illuminate\Session\Store|mixed
+     */
     public function getToken(Request $request)
     {
-        //if (!$request->session()->has(self::ROCKET_ROUTE_TOKEN)) {
+        if (!$request->session()->has(self::ROCKET_ROUTE_TOKEN)) {
             $this->login();
-        //}
+        }
 
         return session(self::ROCKET_ROUTE_TOKEN);
     }
 
-    public function login(): void
+    /**
+     * @param Request $request
+     * @return \Illuminate\Session\SessionManager|\Illuminate\Session\Store|mixed
+     */
+    private function getRefreshToken(Request $request)
+    {
+        if (!$request->session()->has(self::ROCKET_ROUTE_REFRESH_TOKEN)) {
+            $this->login();
+        }
+
+        return session(self::ROCKET_ROUTE_REFRESH_TOKEN);
+    }
+
+    private function login(): void
     {
         try {
-            $response = $this->guzzleHttpClient->request('POST', self::LOGIN_URL,  [
-                'body' => $this->getLoginCredentials(),
-                'headers' => ['Content-Type' => 'application/json'],
-            ]);
+            $response = $this->sendLoginRequest($this->getLoginCredentials());
 
-            $authorizationHeader = $this->getAuthorizationHeader($response->getHeader('Authorization'));
+            $body = json_decode($response->getBody()->__toString(), true)['data'];
+            $refreshToken = $body['refresh_token'] ?? null;
+            $authorizationHeader = $this->getAuthorizationHeader(
+                $response->getHeader('Authorization')
+            );
+
         } catch (GuzzleException $exception){
             Log::error($exception->getMessage());
             return;
         }
 
-        session([self::ROCKET_ROUTE_TOKEN => $this->getBearerToken($authorizationHeader)]);
+        $this->saveTokensToSession($authorizationHeader, $refreshToken);
     }
 
+    /**
+     * @param Request $request
+     */
+    public function relogin(Request $request): void
+    {
+        try {
+            $requestBody = json_encode([
+                'refresh_token' => $this->getRefreshToken($request),
+                'app_key' => env('ROCKET_ROUTE_APP_KEY'),
+            ]);
+            $response = $this->sendLoginRequest($requestBody);
+
+            $body = json_decode($response->getBody()->__toString(), true)['data'];
+
+            $refreshToken = $body['refresh_token'] ?? null;
+            $authorizationHeader = $this->getAuthorizationHeader(
+                $response->getHeader('Authorization')
+            );
+
+        } catch (GuzzleException $exception){
+            Log::error($exception->getMessage());
+            return;
+        }
+
+        $this->saveTokensToSession($authorizationHeader, $refreshToken);
+    }
+
+    /**
+     * @param string $body
+     * @return mixed|\Psr\Http\Message\ResponseInterface
+     * @throws GuzzleException
+     */
+    private function sendLoginRequest(string $body)
+    {
+        $response = $this->guzzleHttpClient->request('POST', self::LOGIN_URL, [
+            'body' => $body,
+            'headers' => ['Content-Type' => 'application/json'],
+        ]);
+
+        return $response;
+    }
     /**
      * @param array $authorizationHeaderArray
      * @return string
@@ -79,5 +140,15 @@ class RocketLoginController extends Controller
             'password' => env('ROCKET_ROUTE_PASSWORD'),
             'app_key' => env('ROCKET_ROUTE_APP_KEY'),
         ]);
+    }
+
+    /**
+     * @param string $authorizationHeader
+     * @param string $refreshToken
+     */
+    private function saveTokensToSession(string $authorizationHeader, string $refreshToken)
+    {
+        session([self::ROCKET_ROUTE_TOKEN => $this->getBearerToken($authorizationHeader)]);
+        session([self::ROCKET_ROUTE_REFRESH_TOKEN => $refreshToken]);
     }
 }
