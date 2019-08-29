@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Api\LoginInterface;
+use App\Http\Controllers\Api\ReLoginInterface;
 use Illuminate\Http\Request;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 
-class RocketLoginController extends Controller
+class RocketLoginController extends Controller implements LoginInterface, ReLoginInterface
 {
     const ROCKET_ROUTE_TOKEN = 'rocket-route-token';
     const ROCKET_ROUTE_REFRESH_TOKEN = 'rocket-route-refresh-token';
@@ -49,7 +51,7 @@ class RocketLoginController extends Controller
         return session(self::ROCKET_ROUTE_REFRESH_TOKEN);
     }
 
-    private function login(): void
+    public function login(): void
     {
         try {
             $response = $this->sendLoginRequest($this->getLoginCredentials());

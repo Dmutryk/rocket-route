@@ -12,7 +12,7 @@ ICAO:<br>
 
 <script type="text/javascript" src="{{ asset('js/functions.js') }}"></script>
 <script
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCjIn6KXclYWxY6PW0WryVDDB8lhdNRUvM&callback=myMap"></script>
+    src="https://maps.googleapis.com/maps/api/js?key={{$googleAppKey}}&callback=myMap"></script>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 </body>
 </html>

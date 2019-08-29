@@ -11,9 +11,5 @@
 |
 */
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
-Route::get('/google-map', ['uses' => 'GoogleMapController@index']);
+Route::get('/', ['uses' => 'GoogleMapController@index']);
 Route::post('/get-airport-data', ['uses' => 'AirportDataController@getAirportData']);

@@ -8,7 +8,6 @@ use Tests\TestCase;
 
 class AirportDataTest extends TestCase
 {
-
     /**
      * @var Generator
      */

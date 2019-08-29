@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Api\LoginInterface;
 use App\Http\Helpers\CoordinateHelper;
 use App\Http\Validators\ValidatesIcaoRequests;
 use Illuminate\Http\Exceptions\HttpResponseException;
@@ -23,7 +24,7 @@ class AirportDataController extends Controller
     private $guzzleHttpClient;
 
     /**
-     * @var \App\Http\Controllers\RocketLoginController
+     * @var LoginInterface
      */
     private $rocketLoginController;
 
@@ -44,7 +45,7 @@ class AirportDataController extends Controller
 
     public function __construct(
         Client $guzzleHttpClient,
-        RocketLoginController $rocketLoginController,
+        LoginInterface $rocketLoginController,
         CoordinateHelper $coordinateHelper
     )
     {
